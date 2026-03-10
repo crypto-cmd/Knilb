@@ -1,0 +1,38 @@
+BasedOnStyle: LLVM
+
+# General
+IndentWidth: 4
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 0
+
+# Spaces
+SpaceBeforeParens: Never
+SpaceBeforeRangeBasedForLoopColon: false
+SpaceBeforeAssignmentOperators: false
+SpaceInEmptyParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles: false
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeComma: false
+SpaceAfterComma: false
+SpaceBeforeSemicolon: false
+SpaceAfterSemicolon: false
+SpaceBeforeCaseColon: false
+SpaceAroundPointerQualifiers: Before
+PointerAlignment: Left
+
+# Braces
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+# Includes
+IncludeBlocks: Preserve
+SortIncludes: true
