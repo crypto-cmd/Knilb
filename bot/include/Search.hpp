@@ -8,13 +8,13 @@
 namespace Knilb::Engine::Search {
 namespace Killer {
 inline Representation::Moves::Move Table[64][2]; // Two killer moves per ply
-void Clear() {
+inline void Clear() {
     for(int i= 0; i < 64; ++i) {
         Table[i][0]= Representation::Moves::DEFAULT_MOVE;
         Table[i][1]= Representation::Moves::DEFAULT_MOVE;
     }
 }
-void Store(int ply, Representation::Moves::Move move) {
+inline void Store(int ply, Representation::Moves::Move move) {
     if(move == Representation::Moves::DEFAULT_MOVE) return; // Don't store invalid moves
     if(ply >= 64) return;                                   // Ply out of bounds
 
@@ -22,7 +22,7 @@ void Store(int ply, Representation::Moves::Move move) {
     Table[ply][0]= move;          // Store the new killer move in the first
 }
 
-int GetScore(int ply, const Representation::Moves::Move& move) {
+inline int GetScore(int ply, const Representation::Moves::Move& move) {
     if(ply >= 64) return 0;
     if(move == Table[ply][0]) return 8000; // Primary killer
     if(move == Table[ply][1]) return 4000; // Secondary killer
@@ -35,7 +35,7 @@ namespace History {
 constexpr int MAX_HISTORY= 16384;
 // History heuristic table: [Color][From][To]
 inline int Table[2][64][64];
-void Clear() {
+inline void Clear() {
     for(int color= 0; color < 2; ++color) {
         for(int from= 0; from < 64; ++from) {
             for(int to= 0; to < 64; ++to) {
@@ -149,7 +149,7 @@ constexpr auto computeTable() {
     return table;
 }
 
-std::array<std::array<int, 64>, 64> Table= computeTable();
+inline std::array<std::array<int, 64>, 64> Table= computeTable();
 } // namespace LMR
 
 }; // namespace Knilb::Engine::Search

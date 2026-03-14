@@ -89,7 +89,7 @@ int Bot::GetExtension(const Representation::Board& board, const Representation::
     return 0;
 }
 
-Bot::Bot(): _board(), _tt(512) {
+Bot::Bot(): _board(), _tt(4 * 1024) {
 }
 
 void Bot::setFen(const std::string& fen) {
@@ -426,19 +426,6 @@ int Bot::quiesce(int alpha, int beta, int ply) {
     return alpha;
 }
 bool Bot::IsFinishThinking() {
-
-    if(_currentSearchConfig.limit.infinite) return false; // Never stop on infinite
-
-    auto elapsedTime= _stopwatch.elapsed();
-
-    if(_currentSearchConfig.limit.movetime > 0) {
-        if(elapsedTime >= _currentSearchConfig.limit.movetime) {
-            std::cout << "info string Move time limit reached: " << elapsedTime << " ms\n";
-            return true; // Stop if we've reached the move time limit (Hard Limit)
-        }
-        return false; // Don't check other limits if move time is set, we rely on it to stop the search
-    }
-
     if(_currentSearchConfig.limit.depth > 0) {
         if(_currentSearchInfo.depthReached >= _currentSearchConfig.limit.depth) {
             std::cout << "info string Depth limit reached: " << _currentSearchInfo.depthReached << "\n";
@@ -447,31 +434,25 @@ bool Bot::IsFinishThinking() {
         return false; // Don't check other limits if depth is set, we rely on it to stop the search
     }
 
-    if(_isTimeLimitSet && elapsedTime >= _softTimeLimit) {
-        // We passed the time limit but what is we are not certain we should stop yet? For example, if we are in the middle of a critical PV node, it might be worth spending a bit more time to finish it off and get a good move out instead of stopping immediately and returning a suboptimal move.
+    if(!_timeController.IsOverTime()) return false; // If we are not over time, keep searching
 
-        if(GetPVSearchStabilityProbability() < 0.75) {
-            // We are pretty unstable (< 75% probability of stability) so we should shift the soft time limit up a bit to allow the search to stabilize and find a better move instead of stopping immediately on the edge of the time limit.
+    // Assume we only went over the soft limit if we are here
+    if(GetPVSearchStabilityProbability() < 0.75) {
+        // We are pretty unstable (< 75% probability of stability) so we should shift the soft time limit up a bit to allow the search to stabilize and find a better move instead of stopping immediately on the edge of the time limit.
 
-            // Move the softlimit up to half way between the current elapsed time and the hard time limit, giving the search a bit more time to stabilize and find a better move instead of stopping immediately on the edge of the time limit.
-            _softTimeLimit= elapsedTime + ((_hardTimeLimit - elapsedTime) / 2);
-
-            // Don't allow the soft limit to exceed the hard limit
-            _softTimeLimit= std::min(_softTimeLimit, _hardTimeLimit);
-            return false; // Don't stop yet, give the search a bit more time to stabilize
-        }
-        return true; // Stop if we've reached the soft time limit and the PV move is stable enough (e.g., > 75% stability probability)
+        // Move the softlimit up to half way between the current elapsed time and the hard time limit, giving the search a bit more time to stabilize and find a better move instead of stopping immediately on the edge of the time limit.
+        // TODO: Experiment with more sophisticated methods of adjusting the soft limit based on the stability probability and how much time is left. For example, if we are very unstable (< 50% probability) we could be more aggressive in giving it extra time, while if we are somewhat stable (50-75%) we could give it a smaller boost.
+        // _timeController.AdjustSoftLimit();
     }
-    return elapsedTime > _hardTimeLimit;
+    // We changed the softime, if we stil over time then we must have hit the hard time limit and should stop.
+    return _timeController.IsOverTime(); // Stop if we are over the hard time limit
 }
 
 std::pair<Representation::Moves::Move, int> Bot::getBestMove(SearchConfig config) {
-    _stopwatch.start();
-    _isTimeLimitSet= false;
 
     // Calculate the time limits that we should actual use for this move based on the SearchConfig
     _currentSearchConfig= config;
-    SetupTimeLimits();
+    _timeController.Setup(_currentSearchConfig.limit, _board);
 
     Search::History::Clear();
     Search::Killer::Clear();
@@ -532,7 +513,7 @@ std::pair<Representation::Moves::Move, int> Bot::getBestMove(SearchConfig config
         if(_searchAborted) break; // If we were signaled to stop during the search, break out of the loop immediately
         depthReached= depth;
 
-        auto elapsedTime= _stopwatch.elapsed();
+        auto elapsedTime= _timeController.GetElapsedTime();
         // Output search info for GUI
 
         _currentSearchInfo.depthReached= depthReached;

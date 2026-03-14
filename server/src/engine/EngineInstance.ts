@@ -1,5 +1,5 @@
 import { spawn, type FileSink } from "bun";
-
+import { ENV } from "../utils/config";
 export default class EngineInstance {
     process: Bun.Subprocess;
     writer: FileSink;
@@ -8,7 +8,7 @@ export default class EngineInstance {
     private listeners: ((line: string) => void)[] = [];
 
     constructor() {
-        this.process = spawn(["/home/orville/dev/Knilb/server/src/Knilb"], {
+        this.process = spawn([ENV.KNILB_EXE_PATH ?? ""], {
             stdin: "pipe",
             stdout: "pipe",
             stderr: "pipe",

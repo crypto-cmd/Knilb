@@ -1,6 +1,7 @@
 #include "Board.hpp"
 #include "Bot.hpp"
 #include "UCI.hpp"
+#include "TimeController.hpp"
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -47,7 +48,7 @@ int main() {
             stopRequested.store(false);
 
             Knilb::Engine::SearchConfig searchConfig;
-            Knilb::Engine::SearchLimit searchLimit;
+            Knilb::Engine::TimeController::SearchLimit searchLimit;
 
             // Configure search limits based on the "go" command parameters
             searchLimit.wtime= cmd.wtime;
